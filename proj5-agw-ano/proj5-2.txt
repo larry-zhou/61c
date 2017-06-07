@@ -1,0 +1,47 @@
+1. Run your code for both SimplePageRank and BackedgesPageRank for 20 iterations on both Facebook dataset and the Enron dataset, parititioned into chunks of 500, on clusters of size 5 and 10. How long do each of these 8 scenarios take?
+
+Simple PageRank, Facebook Dataset, Five Instances : 42.00 min
+Backedges Pagerank, Facebook Dataset, Five Instances : 45.64 min
+Simple PageRank, Enron Dataset, Five Instances : 42.13 min
+Backedges PageRank, Enron Dataset, Five Instances: 43.45 min
+Simple PageRank, Facebook Dataset, Ten Instances : 11.12 min
+Backedges Pagerank, Facebook Dataset, Ten Instances : 12.33 min
+Simple PageRank, Enron Dataset, Ten Instances : 12.20 min
+Backedges PageRank, Enron Dataset, Ten Instances: 15.96 min
+
+2. When running SimplePageRank on the 10 instances with a repartition count of 500, what was the ratio of size of the input file to the runtime of your program for the Enron dataset? How about the Facebook dataset? Does this match your expectations?
+
+Enron file size 4,049,333
+12.20 min = 732 seconds
+4,049,333 bytes = 732 seconds = 5531.876 bytes/second
+Facebook file size 854,500
+11.12 = 667.2 seconds
+854,500 bytes / 667.2 seconds = 1280.725 bytes/second
+
+This did not match my expectations. Because of the different sizes of data, I expected Facebook to run faster by 2x - 4x the amount. However, it was only faster by ~ 1 minute, which is not close to my predictions. Rather than having the same ratio which was expected, Enron's ratio was much higher.
+
+3. What was the speedup for 10 instances relative to 5 instances for 20 iterations of BackedgesPageRank on the Enron dataset with a repartition count of 500? What do you conclude about how well Spark parallelizes your work? How does the algorithm scale in regards to strong scaling? weak scaling?
+43.45 min / 15.96 min = 2.72243107769 speedup
+
+The strong scaling efficiency is 43.45 min / (15.96 min * 2) = 1.36.
+
+To observe strong scaling efficiency, we increase the number of cores, while the problem size should stay the same. This means that the program should ideally take 1/K the amount of time to compute the answer for the same problem, K being the factor we increase the number of cores by. However, ours took 1 / 1.36K the amount of time, meaning increasing the number of cores proved efficient. 
+
+To observe weak scaling efficiency, as the number of cores increases, the problem size is also increased in direct proportion to the number of cores. This means that the program should ideally take the same amount of time to compute the answer for a K times larger problem. However, we really do not have any cases where the file size per core is constant with an increased number of cores, so a quantifiable amount is not really available. However, if we compare 5 instances for 20 iterations of BackedgesPageRank on the Facebook dataset to 10 instances for 20 iterations of BackedgesPageRank on the Enron dataset, we compare 45.64 to 15.96. Because Enron's file is 4.73 times the size of Facebook's, and we are doubling the number of cores, we expect a 2.37 ratio. However, when we compare the times, we have 45.64 / 15.96 = 2.86. So in the case of weak scaling, there is a 2.86 / 2.37 = 1.21 weak scaling efficiency.
+
+4. In part 5, you tinkered with the repartition count. At what repartition count was your code the fastest on average? Why do you think it would go slower if you decreased the partition count? Why do you think it would go slower if you increased the partition count?
+
+The fastest time to completion was all tests done in less than a minute with 20 re-partitions. By increasing the number paritions, we are also increasing the number of operations needed to partition said data. 20 paritions is the threshhold where this occurs, and for the larger number of partitions it is taking more time to partition the work than the time it is saving us. The same thing occurs when we lower the number of partitions. We can save time by running code in parallel, which is why 20 partitions is faster than a single partition. We can conclude that paritioning is only effective to a certain point before it has a negative effect on runtime. 
+
+5. How many dollars in EC2 credits did you use to complete this project? Remember the price of single c1.medium machine is $0.0161 per Hour, and a cluster with 10 slaves has 11 machines (the master counts as one).
+
+2 machines for 1 hour
+6 machines for 1 hour
+6 machines for 6.5 hours
+11 machines for 10 hours
+2 + 6 + 39 + 110
+2 c1 machines * $.0161/hour * 1 hour = $.0322
+6 c1 machines * $.0161/hour * 1 hour = $.0966
+6 c1 machines * $.0161/hour * 6.5 hour = $.6279
+11 c1 machines * $.0161/hour * 10 hour = $1.711
+Total = $2.53
